@@ -123,6 +123,7 @@ class Artifacts(object):
                 'mac': r'OMERO\.clients.*\.mac\.zip',
                 'matlab': r'OMERO\.matlab.*\.zip',
                 'cpp': r'OMERO\.cpp.*\.zip',
+                'bf-cpp': r'bioformats-cpp.*\.zip',
                 }
 
     def download(self, component):
