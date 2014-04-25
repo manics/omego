@@ -5,6 +5,7 @@ import os
 import logging
 import re
 import urllib2
+from tempfile import NamedTemporaryFile
 from zipfile import ZipFile
 
 log = logging.getLogger("omego.fileutils")
@@ -125,6 +126,86 @@ def rename_backup(name, suffix='.bak'):
     log.info('Renaming %s to %s', name, newname)
     os.rename(name, newname)
     return newname
+
+
+class SafeRewrite:
+    """
+    A helper class for safe rewrites of files. Writes to a temporary file in
+    the same directory as the file to be modified.
+
+    If the most recent call or lookup occurred without an error then
+    automatically renames the file to its final name when close() is called,
+    otherwise it will not be rewritten.
+
+    This can be used as a context Manager, e.g.
+    with SafeRewrite(filename) as ...
+    """
+
+    def __init__(self, filename, backup='.bak', mode='w+b',
+                 deleteonerror=False):
+        """
+        filename: The name of the file to be rewritten
+        backup: Backup the file with this extension (plus a number if it
+          already exists), set to None to disable
+        mode: The file opening mode
+        deleteonerror: If True delete the temporary file if an error occurs,
+          default False. If an error occurred the temporary file name is stored
+          in .file.name
+        """
+        self.filename = filename
+        self.backup = backup
+        self.deleteonerror = deleteonerror
+        self.error = False
+        self.file = NamedTemporaryFile(
+            mode, prefix=os.path.basename(filename) + '.',
+            dir=os.path.dirname(filename), delete=False)
+
+    def close(self):
+        if self.error:
+            if self.deleteonerror:
+                log.debug('Not overwriting, Deleting temporary file')
+                self.file.close()
+                os.unlink(self.file.name)
+            else:
+                log.debug('Not overwriting or deleting')
+        else:
+            if self.backup:
+                rename_backup(self.filename)
+                self.file.close()
+                log.debug('Renaming %s to %s', self.file.name, self.filename)
+                os.rename(self.file.name, self.filename)
+
+    def set_error_on_exception(self, func):
+        """
+        A decorator that sets the error attribute to True if an exception
+        occurred in the most recent call
+        """
+        def error_on_exception(*args, **kwargs):
+            try:
+                self.error = False
+                return func(*args, **kwargs)
+            except:
+                self.error = True
+                raise
+        return error_on_exception
+
+    def __getattr__(self, name):
+        """
+        Delegate lookups to the underlying file object, check for errors
+        """
+        if not hasattr(self.file, name):
+            raise AttributeError("No attribute '%s'" % name)
+        return self.set_error_on_exception(getattr(self.file, name))
+
+    def __enter__(self):
+        self.file.__enter__()
+        return self
+
+    def __exit__(self, exc, value, tb):
+        if exc:
+            self.error = True
+        self.close()
+        self.file.__exit__(exc, value, tb)
 
 
 def is_archive(filename):
