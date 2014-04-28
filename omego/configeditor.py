@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
 from xml.etree.ElementTree import XML, Element, SubElement, Comment, ElementTree, tostring
 import xml.dom.minidom
 
@@ -39,16 +40,16 @@ def update_template_java_heapsize(filename):
 def set_java_heapsize(x):
     replacements = [
         ('./server-template[@id="BlitzTemplate"]/server/option',
-         '-Xmx512M', '-Xmx1024M'),
+         '-Xmx\d+M$', '-Xmx1024M'),
         ('./server-template[@id="IndexerTemplate"]/server/option',
-         '-Xmx256M', '-Xmx1024M'),
+         '-Xmx\d+M$', '-Xmx1024M'),
         ('./server-template[@id="PixelDataTemplate"]/server/option',
-         '-Xmx256M', '-Xmx1024M'),
+         '-Xmx\d+M$', '-Xmx1024M'),
         ]
     for (p, match, replace) in replacements:
         print 'Searching for %s' % p
         es = x.findall(p)
         for e in es:
-            if e.text == match:
+            if re.match(match, e.text):
                 print 'Changing %s %s to %s' % (p, e.text, replace)
                 e.text = replace
