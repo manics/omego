@@ -37,6 +37,7 @@ import logging
 argparse_loaded = True
 try:
     import argparse
+    import argparseconfig
 except ImportError:
     print >> sys.stderr, \
         "Module argparse missing. Install via 'pip install argparse'"
@@ -145,7 +146,7 @@ def parsers():
                 argparse.RawTextHelpFormatter._Section.__init__(
                     self, formatter, parent, heading)
 
-    omego_parser = argparse.ArgumentParser(
+    omego_parser = argparseconfig.ArgparseConfigParser(
         description='omego - installation and administration tool',
         formatter_class=HelpFormatter)
     sub_parsers = omego_parser.add_subparsers(title="Subcommands")
