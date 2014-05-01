@@ -88,6 +88,9 @@ class ArgparseConfigParser(argparse.ArgumentParser):
         config_section should also be given
       config_section, str: The ConfigParser section name, if not specified
         then no config values will be used for this parser
+      ignore_missing, bool: If True (default) missing configuration
+        sections will be ignored. If configuration files are optional this
+        must be True.
 
 
     Overridden methods
@@ -162,9 +165,9 @@ class ArgparseConfigParser(argparse.ArgumentParser):
     group = subparser.add_argument_group('title', config_section='subgroup')
 
     argv = '-c f1.cfg -c f2.cfg -a 1 -b 1'.split()
-    parser = ArgparseConfigParser()
+    parser = ArgparseConfigParser(add_help=False)
     parsed, remaining, config = parser.add_and_parse_config_files(
-        '-c', '--conffile', args=argv, config_section='section')
+        '-c', '--conffile', args=argv, config_section='section', add_help=True)
     # c1.cfg and c2.cfg will be read and the required section used to set the
     # defaults for subsequent add_argument() calls
     parser.add_argument('-a', help='Help for a')
@@ -175,6 +178,7 @@ class ArgparseConfigParser(argparse.ArgumentParser):
         self.config_dict = kwargs.pop('config_dict', None)
         self.config_parser = kwargs.pop('config_parser', None)
         config_section = kwargs.pop('config_section', None)
+        self.ignore_missing = bool(kwargs.pop('ignore_missing', True))
 
         if self.config_dict and self.config_parser:
             raise Exception('Invalid combination of arguments')
@@ -263,4 +267,9 @@ class ArgparseConfigParser(argparse.ArgumentParser):
         if section is None:
             return {}
             # raise Exception('No ConfigParser section name provided')
-        return dict(self.config_parser.items(section))
+        try:
+            return dict(self.config_parser.items(section))
+        except ConfigParser.NoSectionError:
+            if self.ignore_missing:
+                return {}
+            raise
