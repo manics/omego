@@ -22,7 +22,7 @@
 import pytest
 
 import argparse
-from ConfigParser import SafeConfigParser
+from ConfigParser import SafeConfigParser, NoSectionError
 from omego import argparseconfig
 
 
@@ -186,3 +186,26 @@ class TestArgparseConfigParser(object):
         else:
             args = parser.parse_args(argv)
             self.assert_args_equal(expected, args)
+
+    @pytest.mark.parametrize('ignore_missing', [True, False])
+    @pytest.mark.parametrize('missing', [True, False])
+    def test_get_set_config(self, ignore_missing, missing):
+        acpargs = {'config_parser': self.cp, 'config_section': 'main'}
+        if not ignore_missing:
+            acpargs['ignore_missing'] = False
+        if missing:
+            acpargs['config_section'] = 'missing'
+
+        if ignore_missing or not missing:
+            parser = argparseconfig.ArgparseConfigParser(**acpargs)
+            if missing:
+                assert parser.config_dict == {}
+            else:
+                assert parser.config_dict == {'int': '1'}
+        else:
+            if missing:
+                with pytest.raises(NoSectionError):
+                    parser = argparseconfig.ArgparseConfigParser(**acpargs)
+            else:
+                parser = argparseconfig.ArgparseConfigParser(**acpargs)
+                assert parser.config_dict == {'int': '1'}
