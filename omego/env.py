@@ -74,6 +74,10 @@ class EnvDefault(argparse.Action):
                             default=default, **kwargs)
 
 
+def Add(parser, name, default, **kwargs):
+    parser.add_argument("--%s" % name, default=default, **kwargs)
+
+
 class DbParser(argparseconfig.ArgparseConfigParser):
 
     def __init__(self, parser):
@@ -82,7 +86,6 @@ class DbParser(argparseconfig.ArgparseConfigParser):
             'Database arguments',
             'Arguments related to administering the database')
 
-        Add = EnvDefault.add
         Add(group, "dbhost", HOSTNAME,
             help="Hostname of the OMERO database server")
         # No default dbname to prevent inadvertent upgrading of databases
@@ -111,7 +114,6 @@ class JenkinsParser(argparseconfig.ArgparseConfigParser):
             'Jenkins arguments',
             'Arguments related to the Jenkins instance')
 
-        Add = EnvDefault.add
         Add(group, "ci", "ci.openmicroscopy.org",
             help="Base url of the continuous integration server")
         Add(group, "branch", "OMERO-trunk",
@@ -134,7 +136,6 @@ class FileUtilsParser(argparseconfig.ArgparseConfigParser):
             'Remote and local file handling parameters',
             'Additional arguments for downloading or unzipped files')
 
-        Add = EnvDefault.add
         Add(group, "unzipdir", "",
             help="Unzip archives into this directory")
         group.add_argument("--skipunzip", action="store_true",
