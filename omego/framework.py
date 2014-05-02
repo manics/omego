@@ -84,13 +84,14 @@ class Command(object):
 
     NAME = "abstract"
 
-    def __init__(self, sub_parsers):
+    def __init__(self, sub_parsers, parents=None):
         self.log = logging.getLogger("omego.%s" % self.NAME)
         self.log_level = OMEGO_DEBUG_LEVEL
 
         help = self.__doc__.lstrip()
-        self.parser = sub_parsers.add_parser(self.NAME,
-                                             help=help, description=help)
+        self.parser = sub_parsers.add_parser(
+            self.NAME, help=help, description=help, config_section=self.NAME,
+            parents=parents)
         self.parser.set_defaults(func=self.__call__)
 
         self.parser.add_argument(
@@ -116,7 +117,14 @@ class Command(object):
         self.dbg = self.log.debug
 
 
-def parsers():
+def parsers(parse_config_files=None):
+    """
+    Create the base command line arguments parser
+    parse_config_files: A list of option names to indicate config-files
+      containing command line option arguments, for example
+      ['-c', '--conffile']. If provided a first pass will be done to read
+      the config files and set the default values
+    """
 
     class HelpFormatter(argparse.RawTextHelpFormatter):
         """
@@ -149,12 +157,20 @@ def parsers():
     omego_parser = argparseconfig.ArgparseConfigParser(
         description='omego - installation and administration tool',
         formatter_class=HelpFormatter)
+
+    parents = []
+    if parse_config_files:
+        parsed, remaining, config, cfgparser = \
+            omego_parser.add_and_parse_config_files(
+                *parse_config_files, config_section='main', add_help=False)
+        parents.append(cfgparser)
+
     sub_parsers = omego_parser.add_subparsers(title="Subcommands")
 
-    return omego_parser, sub_parsers
+    return omego_parser, sub_parsers, parents
 
 
-def main(args=None, items=None):
+def main(args=None, items=None, parse_config_files=None):
     """
     Reusable entry point. Arguments are parsed
     via the argparse-subcommands configured via
@@ -171,7 +187,7 @@ def main(args=None, items=None):
     if items is None:
         items = globals().items()
 
-    omego_parser, sub_parsers = parsers()
+    omego_parser, sub_parsers, parents = parsers(parse_config_files)
 
     for name, MyCommand in sorted(items):
         if not isinstance(MyCommand, type):
@@ -180,7 +196,7 @@ def main(args=None, items=None):
             continue
         if MyCommand.NAME == "abstract":
             continue
-        MyCommand(sub_parsers)
+        MyCommand(sub_parsers, parents)
 
     ns = omego_parser.parse_args(args)
     ns.func(ns)

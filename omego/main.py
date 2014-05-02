@@ -46,7 +46,8 @@ def entry_point():
             (UpgradeCommand.NAME, UpgradeCommand),
             (DownloadCommand.NAME, DownloadCommand),
             (DbCommand.NAME, DbCommand),
-            (Version.NAME, Version)])
+            (Version.NAME, Version)],
+            parse_config_files=['-c', '--conffile'])
     except Stop, stop:
         if stop.rc != 0:
             print "ERROR:", stop
