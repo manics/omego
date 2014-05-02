@@ -108,21 +108,26 @@ class ArgparseConfigParser(argparse.ArgumentParser):
 
     add_subparsers()
       Returns a modified subparsers object that includes a link to the parent
-      config values.
+      config values. This object includes a method addparser().
 
-      This object includes a method addparser() which takes the same optional
-      config arguments as ArgparseConfigParser, except that config_parser from
-      the parent parser will be automatically set if not otherwise provided,
-      so just config_section can be specified
+      addparser()
+        Takes the same optional config arguments as ArgparseConfigParser,
+        except that config_parser from the parent parser will be automatically
+        set if not otherwise provided, so just config_section can be
+        specified.
 
 
     Additional methods
 
     add_and_parse_config_files(*optionargs,
-        args=None, config_section=None, add_help=True)
-      Adds a argument to itself to look for config-files, and attempts to
-      parse them. If multiple config-file arguments are passed they will be
-      merged with values from later files overridding earlier ones.
+        args=None, config_section=None, add_help=True, add_to_self=False)
+      Looks for config-files, and attempts to parse them. If multiple
+      config-file arguments are passed they will be merged with values from
+      later files overridding earlier ones.
+
+      The configurations will be added to this object. If add_to_self is True
+      then the argument parser will be added to this object, otherwise they
+      will be added to a separate parser.
 
       Note this will call parse_known_args() to find any config files in the
       command line arguments. This means if help was requested the parser will
@@ -189,15 +194,24 @@ class ArgparseConfigParser(argparse.ArgumentParser):
         self.subparsers = None
 
     def add_and_parse_config_files(self, *optionargs, **kwargs):
-        super(ArgparseConfigParser, self).add_argument(
-            *optionargs, action='append', default=[],
-            help='Configuration file (can be repeated)', metavar='FILE.cfg')
+        # Must disable help, otherwise parse_args will exit prematurely before
+        # the subparsers have been added. Unfortunately this means the config
+        # files will always be read even if help is specified
 
         args = kwargs.pop('args', None)
         config_section = kwargs.pop('config_section', None)
         add_help = kwargs.pop('add_help', True)
+        add_to_self = kwargs.pop('add_to_self', False)
 
-        parsed_args, remaining_args = self.parse_known_args(args)
+        if add_to_self:
+            cfgparser = self
+        else:
+            cfgparser = ArgparseConfigParser(add_help=False)
+        cfgparser.add_argument(
+            *optionargs, action='append', default=[],
+            help='Configuration file (can be repeated)', metavar='FILE.cfg')
+
+        parsed_args, remaining_args = cfgparser.parse_known_args(args)
         config = ConfigParser.SafeConfigParser()
         # TODO: Read defaults in from a file
         # config.readfp(open('defaults.cfg'))
@@ -211,12 +225,12 @@ class ArgparseConfigParser(argparse.ArgumentParser):
                 'Failed to read configuration file(s): %s' % ' '.join(unread))
 
         if add_help:
-            super(ArgparseConfigParser, self).add_argument(
+            cfgparser.add_argument(
                 '-h', '--help', action='help', default=argparse.SUPPRESS,
                 help='show this help message and exit')
 
         self.set_config(config, config_section)
-        return parsed_args, remaining_args, config
+        return parsed_args, remaining_args, config, cfgparser
 
     def add_argument(self, *args, **kwargs):
         has_default = 'default' in kwargs
