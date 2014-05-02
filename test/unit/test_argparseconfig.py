@@ -59,7 +59,8 @@ class TestArgparseConfigParser(object):
             assert getattr(obj, k) == v
 
     @pytest.mark.parametrize('mode', ['noargs', 'args'])
-    def test_add_and_parse_config_files(self, tmpdir, mode):
+    @pytest.mark.parametrize('add_to_self', [True, False])
+    def test_add_and_parse_config_files(self, tmpdir, mode, add_to_self):
         cfg1txt = [
             '[main]',
             'a = 1',
@@ -79,15 +80,19 @@ class TestArgparseConfigParser(object):
         argv1 = ['-c', str(cfg1), '--conffile', str(cfg2)]
         if mode == 'noargs':
             argv2 = []
-            expected2 = {'a': 1, 'b': None, 'conffile': []}
+            expected2 = {'a': 1, 'b': None}
         else:
             argv2 = ['-a', '10', '-b', '20']
-            expected2 = {'a': 10, 'b': 20, 'conffile': []}
+            expected2 = {'a': 10, 'b': 20}
+        if add_to_self:
+            expected2['conffile'] = []
         argv = argv1 + argv2
 
         parser = argparseconfig.ArgparseConfigParser(add_help=False)
-        parsed, remaining, config = parser.add_and_parse_config_files(
-            '-c', '--conffile', args=argv, config_section='main')
+        parsed, remaining, config, cfgparser = \
+            parser.add_and_parse_config_files(
+                '-c', '--conffile', args=argv, config_section='main',
+                add_to_self=add_to_self)
 
         assert parser.config_parser == config
         self.assert_args_equal({'conffile': [str(cfg1), str(cfg2)]}, parsed)
