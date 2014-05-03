@@ -162,6 +162,16 @@ class DownloadCommand(Command):
     Download an OMERO artifact from a CI server.
     """
 
+    USAGE = """
+    Usage: omego download [options] (%s)
+    %s
+    %s
+    %s
+
+      -n, --dry-run         Dry run
+    """ % (' | '.join(Artifacts.get_artifacts_list().keys()), __doc__,
+           JenkinsParser.__doc__, FileUtilsParser.__doc__)
+
     NAME = "download"
 
     def __init__(self, sub_parsers):

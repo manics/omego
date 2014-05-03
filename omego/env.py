@@ -74,6 +74,16 @@ class EnvDefault(argparse.Action):
 
 
 class DbParser(argparse.ArgumentParser):
+    """
+    Database arguments:
+      --dbname <name>        Database name
+      --dbhost <host>        Database hostname [default: 127.0.0.1]
+      --dbport <port>        Database port [default: 5432]
+      --dbuser <user>        Database username [default: omero]
+      --dbpass <password>    Database password [default: omero]
+      --rootpass <password>  Password for the omero root user [default: omero]
+      --omerosql <sqlfile>   Use an existing SQL file
+    """
 
     def __init__(self, parser):
         self.parser = parser
@@ -103,6 +113,17 @@ class DbParser(argparse.ArgumentParser):
 
 
 class JenkinsParser(argparse.ArgumentParser):
+    """
+    Jenkins arguments:
+      --ci <server>      Base url of the continuous integration server
+                         [default: ci.openmicroscopy.org]
+      --branch <job>     Name of the Jenkins job containing the artifacts
+                         [default: OMERO-trunk]
+      --build <url>      Full url of the Jenkins build containing the artifacts
+                         [default: http://%(ci)s/job/%(branch)s/lastSuccessfulBuild/]
+      --labels <labels>  Comma separated list of labels for matrix builds
+                         [default: ICE=3.5]
+    """
 
     def __init__(self, parser):
         self.parser = parser
@@ -126,6 +147,14 @@ class JenkinsParser(argparse.ArgumentParser):
 
 
 class FileUtilsParser(argparse.ArgumentParser):
+    """
+    Remote and local file handling parameters:
+      --unzipdir <directory>     Unzip archives into this directory
+      --overwrite (error | backup | keep)  Whether to overwrite or keep
+                                 existing files [default: error]
+      --httpuser <user>          Username for HTTP authentication
+      --httppassword <password>  Password for HTTP authentication
+    """
 
     def __init__(self, parser):
         self.parser = parser

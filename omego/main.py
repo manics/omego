@@ -34,19 +34,47 @@ from artifacts import DownloadCommand
 from db import DbCommand
 from version import Version
 
+from docopt import docopt
 
 def entry_point():
     """
-    External entry point which calls main() and
-    if Stop is raised, calls sys.exit()
+    Usage: omego [-v] [-c CFGFILE [-c ...]] [-h] <command> [<args>...]
+
+    Options:
+      -v                  Enable verbose output
+      -h, --help          Show help message and exit
+      -c CFGFILE, --conf  Configuration files, multiple files will be merged
     """
     try:
-        main(items=[
+        items = [
             (InstallCommand.NAME, InstallCommand),
             (UpgradeCommand.NAME, UpgradeCommand),
             (DownloadCommand.NAME, DownloadCommand),
             (DbCommand.NAME, DbCommand),
-            (Version.NAME, Version)])
+            (Version.NAME, Version)
+        ]
+        itemsmap = dict(it for it in items)
+
+        commands = '\n'.join(
+            '    %s  %s' % (it[0], it[1].__doc__) for it in items)
+
+        args = docopt(entry_point.__doc__ + '\n' + commands,
+                      version='0.0.0', options_first=True)
+        print('global arguments:')
+        print(args)
+        print('command arguments:')
+        argv = [args['<command>']] + args['<args>']
+        print(argv)
+
+        try:
+            it = itemsmap[args['<command>']]
+            if hasattr(it, 'USAGE'):
+                print(docopt(it.USAGE, argv=argv))
+        except KeyError:
+            raise Stop(100, 'Invalid command: %s' % args['<command>'])
+
+        return
+        main(items)
     except Stop, stop:
         if stop.rc != 0:
             print "ERROR:", stop

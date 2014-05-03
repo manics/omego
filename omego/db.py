@@ -167,6 +167,15 @@ class DbCommand(Command):
     Administer an OMERO database
     """
 
+    USAGE = """
+    Usage: omego db init [options] <server>
+           omego db upgrade [options] <server>
+    %s
+    %s
+      -v, --verbose         Verbose output
+      -n, --dry-run         Dry run
+    """ % (__doc__, DbParser.__doc__)
+
     NAME = "db"
 
     def __init__(self, sub_parsers):

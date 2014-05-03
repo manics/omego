@@ -316,6 +316,46 @@ class InstallBaseCommand(Command):
     Do not call this class directly
     """
 
+    USAGE = """
+    Options:
+      --hostname <hostname>
+      --name <name>
+      --address <address>
+      --skipemail
+
+    Ports:
+      --prefix <prefix>     Prefix omero ports
+      --registry <registry> Registry port
+      --tcp <tcp>           TCP port
+      --ssl <ssl>           SSL port
+
+    OMERO.server configuration:
+      --mem <heap>          Java heap size [default: Xmx1024M]
+      --cfg <config>        Server configuration file (config.xml)
+
+    Web:
+      --web <servers>       Web configuration for OMERO.servers
+      --skipweb             Don't start OMERO.web
+
+    Email:
+      --subject <subject>
+      --sender <email>
+      --recipients <emails>
+      --XXserver <server>   No idea what this is for
+      --smtp_server <smtp>
+      --weburl <url>
+
+    Server setup:
+      --sym <symlink>         OMERO.server symlink name [default: OMERO-CURRENT]
+      --skipdelete            Don't delete previous server
+      --skipdeletezip         Don't delete zip file
+      --savevars <vars>       Environment variables to save
+      --savevarsfile <file>   Save environment variable to this file
+    %s
+    %s
+    %s
+    """ % (JenkinsParser.__doc__, DbParser.__doc__, FileUtilsParser.__doc__)
+
     def __init__(self, sub_parsers):
         super(InstallBaseCommand, self).__init__(sub_parsers)
 
@@ -426,6 +466,15 @@ class InstallCommand(InstallBaseCommand):
     Setup a new OMERO installation.
     """
 
+    USAGE = """
+    Usage: omego install [options] [server]
+    %s
+    %s
+      --initdb              Initialise the database
+      -v, --verbose         Verbose output
+      -n, --dry-run         Dry run
+    """ % (__doc__, InstallBaseCommand.USAGE)
+
     NAME = "install"
 
     def __init__(self, sub_parsers):
@@ -438,6 +487,16 @@ class UpgradeCommand(InstallBaseCommand):
     """
     Upgrade an existing OMERO installation.
     """
+
+    USAGE = """
+    Usage: omego upgrade [options] [<server>]
+    %s
+    %s
+      --upgradedb           Upgrade the database
+      -v, --verbose         Verbose output
+      -n, --dry-run         Dry run
+      server                The server directory, zip-file or url to a zipfile
+    """ % (__doc__, InstallBaseCommand.USAGE)
 
     NAME = "upgrade"
 
